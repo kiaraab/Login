@@ -18,14 +18,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import org.w3c.dom.CDATASection;
 
 import java.security.Key;
+import java.util.ArrayList;
 
 public class counterPage extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
-    private Button logout;
+    private Button submit;
     private Button decrease;
     private Button increase;
     private TextView occupancyDescriptor;
@@ -38,9 +45,8 @@ public class counterPage extends AppCompatActivity {
     private Integer counter = 0;
     String email,Notes,openClose,business_name;
     String occupancy_Level;
-    public static final String KeyBusiness = "KeyBusinessName";
-    public static final String PrefName = "share";
-    SharedPreferences pref;
+    DatabaseReference databaseRef ;
+    ArrayList<OccupancyData> list;
 
 
 
@@ -50,12 +56,8 @@ public class counterPage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_counter_page);
 
-        //editor.putString(KeyBusiness,"");
-
-
-        
-
         firebaseAuth = FirebaseAuth.getInstance();
+
         decrease = (Button)findViewById(R.id.DecreaseBtn);
         increase = (Button)findViewById(R.id.IncreaseBtn);
         occupancyDescriptor = (TextView)findViewById(R.id.OccupancyDescriptor);
@@ -66,30 +68,46 @@ public class counterPage extends AppCompatActivity {
         yes = (CheckBox)findViewById(R.id.Yes);
         no = (CheckBox)findViewById(R.id.No);
 
-        logout = (Button)findViewById(R.id.btnLogout);
-        pref = counterPage.this.getSharedPreferences(PrefName, Context.MODE_PRIVATE);
+        submit = (Button)findViewById(R.id.btnLogout);
 
+        //list = new ArrayList<OccupancyData>();
 
-        // setting onclick listeners
-//        BusinessName.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                business_name = BusinessName.getText().toString();
-//                SharedPreferences.Editor editor = pref.edit();
-//                editor.putString(KeyBusiness, business_name);
-//                editor.commit();
-//                Toast.makeText(counterPage.this,"done",Toast.LENGTH_SHORT).show();
-////                business_name = pref.getString(KeyBusiness,"");
-////                BusinessName.setText(business_name);
-////                //BusinessName.setText(BusinessName.getText().toString());
-////                editor.putString(KeyBusiness,BusinessName.getText().toString());
-////                editor.commit();
-////
-////                // setting it to the new one
-////                business_name = pref.getString(KeyBusiness,"");
-////                BusinessName.setText(business_name);
-//            }
-//        });
+        //code causing issue
+
+        // uploading from the database
+        //String uid = firebaseAuth.getCurrentUser().getUid();
+//            databaseRef = FirebaseDatabase.getInstance().getReference().child("Login/"+uid);
+//
+//            databaseRef.addValueEventListener(new ValueEventListener() {
+//                @Override
+//                public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        if(snapshot.getValue()!=null){
+//                            email = snapshot.child("email").getValue().toString();
+//                            userEmail.setText(email);
+//                            occupancy_Level = snapshot.child("occupancy level").getValue().toString();
+//                            occupancyLevels.setText(occupancy_Level);
+//                        }
+//
+//
+//                    }
+//
+//
+//                @Override
+//                public void onCancelled(@NonNull DatabaseError error) {
+//                    System.out.println("The read failed"+ error.getCode());
+//                }
+//            });
+
+        // issue causing code stop
+
+         //setting onclick listeners
+        BusinessName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                business_name = BusinessName.getText().toString();
+                BusinessName.setText(business_name);
+            }
+        });
         userEmail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -97,17 +115,8 @@ public class counterPage extends AppCompatActivity {
                 email = userEmail.getText().toString();
             }
         });
-        logout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                business_name = BusinessName.getText().toString();
-                SharedPreferences.Editor editor = pref.edit();
-                editor.putString(KeyBusiness, business_name);
-                editor.commit();
-                Toast.makeText(counterPage.this,"done",Toast.LENGTH_SHORT).show();
-                //sendData();
-            }
-        });
+
+
         // setting the note
         notes.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,15 +128,17 @@ public class counterPage extends AppCompatActivity {
         // setting checkboxes for whether open or closed
         yes.setChecked(false);
         no.setChecked(false);
-        if(yes.isChecked()){
-            yes.setChecked(true);
-            openClose="open";
-        }
 
-        if(no.isChecked()){
-            no.setChecked(true);
-            openClose="close";
-        }
+
+        occupancyLevels.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                counter = Integer.parseInt(occupancyLevels.getText().toString());
+
+                occupancyLevels.setText(Integer.toString(counter));
+
+            }
+        });
         // increase and decrease
         decrease.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,15 +154,52 @@ public class counterPage extends AppCompatActivity {
                 occupancyLevels.setText(Integer.toString(counter));
             }
         });
-        occupancyLevels.setOnClickListener(new View.OnClickListener() {
+
+        // submit button
+        submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                counter = Integer.parseInt(occupancyLevels.getText().toString());
-                occupancyLevels.setText(Integer.toString(counter));
+                // authenticating and then writing to the database
+                FirebaseAuth.getInstance().addAuthStateListener(new FirebaseAuth.AuthStateListener() {
+                    @Override
+                    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                        business_name = BusinessName.getText().toString();
+                        email = userEmail.getText().toString();
+                        Notes = notes.getText().toString();
+                        occupancy_Level = Integer.toString(counter);
+                        if(yes.isChecked() && no.isChecked() == false){
+                            yes.setChecked(true);
+                            openClose="open";
+                        }
+                        else if(no.isChecked() && yes.isChecked()==false){
+                            no.setChecked(true);
+                            openClose="close";
+                        }
+                        databaseRef = FirebaseDatabase.getInstance().getReference().child("Login").child(firebaseAuth.getCurrentUser().getUid());
+                        databaseRef.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                snapshot.getRef().child("name").setValue(business_name);
+                                snapshot.getRef().child("email").setValue(email);
+                                snapshot.getRef().child("notes").setValue(Notes);
+                                snapshot.getRef().child("open Close").setValue(openClose);
+                                snapshot.getRef().child("occupancy level").setValue(occupancy_Level);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+
+                    }
+                });
 
             }
         });
-        occupancy_Level = counter.toString();
+
+
+
 
     }
 
@@ -174,14 +222,5 @@ public class counterPage extends AppCompatActivity {
             }
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void sendData(){
-
-        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-        // getting database reference
-        DatabaseReference databaseReference = firebaseDatabase.getReference(firebaseAuth.getUid());
-        OccupancyData occupancyData = new OccupancyData(business_name,email,Notes,openClose,occupancy_Level);
-        databaseReference.setValue(occupancyData);
     }
 }
