@@ -75,28 +75,41 @@ public class counterPage extends AppCompatActivity {
         //code causing issue
 
         // uploading from the database
-        //String uid = firebaseAuth.getCurrentUser().getUid();
-//            databaseRef = FirebaseDatabase.getInstance().getReference().child("Login/"+uid);
-//
-//            databaseRef.addValueEventListener(new ValueEventListener() {
-//                @Override
-//                public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                        if(snapshot.getValue()!=null){
-//                            email = snapshot.child("email").getValue().toString();
-//                            userEmail.setText(email);
-//                            occupancy_Level = snapshot.child("occupancy level").getValue().toString();
-//                            occupancyLevels.setText(occupancy_Level);
-//                        }
-//
-//
-//                    }
-//
-//
-//                @Override
-//                public void onCancelled(@NonNull DatabaseError error) {
-//                    System.out.println("The read failed"+ error.getCode());
-//                }
-//            });
+        String uid = firebaseAuth.getCurrentUser().getUid();
+            databaseRef = FirebaseDatabase.getInstance().getReference().child("Login").child(uid);
+
+            databaseRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if(snapshot.getValue()!=null){
+                            email = snapshot.child("email").getValue().toString();
+                            userEmail.setText(email);
+                            occupancy_Level = snapshot.child("occupancy level").getValue().toString();
+                            occupancyLevels.setText(occupancy_Level);
+                            counter = Integer.parseInt(occupancy_Level);
+                            Notes = snapshot.child("notes").getValue().toString();
+                            notes.setText(Notes);
+                            openClose = snapshot.child("open Close").getValue().toString();
+                            if(openClose.equals("open")){
+                                yes.setChecked(true);
+                            }
+                            else if (openClose.equals("close")){
+                                no.setChecked(true);
+                            }
+                            business_name = snapshot.child("name").getValue().toString();
+                            BusinessName.setText(business_name);
+
+                        }
+
+
+                    }
+
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    System.out.println("The read failed"+ error.getCode());
+                }
+            });
 
         // issue causing code stop
 
@@ -135,7 +148,7 @@ public class counterPage extends AppCompatActivity {
             public void onClick(View view) {
                 counter = Integer.parseInt(occupancyLevels.getText().toString());
 
-                occupancyLevels.setText(Integer.toString(counter));
+                //occupancyLevels.setText(Integer.toString(counter));
 
             }
         });
@@ -188,7 +201,7 @@ public class counterPage extends AppCompatActivity {
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
-
+                                Toast.makeText(counterPage.this," data Changed but issue while writing", Toast.LENGTH_SHORT).show();
                             }
                         });
 
@@ -205,7 +218,7 @@ public class counterPage extends AppCompatActivity {
 
     private void Logout(){
         firebaseAuth.signOut();
-        finish();
+        //finish();
         startActivity(new Intent(counterPage.this,MainActivity.class));
     }
     @Override
@@ -219,6 +232,7 @@ public class counterPage extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.logoutMenu:{
                 Logout();
+                break;
             }
         }
         return super.onOptionsItemSelected(item);
