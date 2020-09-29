@@ -29,6 +29,7 @@ import org.w3c.dom.CDATASection;
 
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class counterPage extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
@@ -42,6 +43,9 @@ public class counterPage extends AppCompatActivity {
     private EditText notes;
     private CheckBox yes ;
     private  CheckBox no ;
+    Boolean flag;
+    String uid;
+    private Button logoutbtn;
     private Integer counter = 0;
     String email,Notes,openClose,business_name;
     String occupancy_Level;
@@ -67,51 +71,47 @@ public class counterPage extends AppCompatActivity {
         notes = (EditText)findViewById(R.id.notes);
         yes = (CheckBox)findViewById(R.id.Yes);
         no = (CheckBox)findViewById(R.id.No);
+        logoutbtn = (Button)findViewById(R.id.logoutBtn);
 
         submit = (Button)findViewById(R.id.btnLogout);
 
         //list = new ArrayList<OccupancyData>();
 
-        //code causing issue
 
-        // uploading from the database
-        String uid = firebaseAuth.getCurrentUser().getUid();
-            databaseRef = FirebaseDatabase.getInstance().getReference().child("Login").child(uid);
-
-            databaseRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if(snapshot.getValue()!=null){
-                            email = snapshot.child("email").getValue().toString();
-                            userEmail.setText(email);
-                            occupancy_Level = snapshot.child("occupancy level").getValue().toString();
-                            occupancyLevels.setText(occupancy_Level);
-                            counter = Integer.parseInt(occupancy_Level);
-                            Notes = snapshot.child("notes").getValue().toString();
-                            notes.setText(Notes);
-                            openClose = snapshot.child("open Close").getValue().toString();
-                            if(openClose.equals("open")){
-                                yes.setChecked(true);
-                            }
-                            else if (openClose.equals("close")){
-                                no.setChecked(true);
-                            }
-                            business_name = snapshot.child("name").getValue().toString();
-                            BusinessName.setText(business_name);
-
-                        }
-
-
+         /** possible issue here  **/
+        // retrieving from the database to get last saved state
+        uid = Objects.requireNonNull(firebaseAuth.getCurrentUser()).getUid();
+        databaseRef = FirebaseDatabase.getInstance().getReference().child("Login").child(uid);
+        databaseRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(snapshot.getValue()!=null){
+                    email = snapshot.child("email").getValue().toString();
+                    userEmail.setText(email);
+                    occupancy_Level = snapshot.child("occupancy level").getValue().toString();
+                    occupancyLevels.setText(occupancy_Level);
+                    counter = Integer.parseInt(occupancy_Level);
+                    Notes = snapshot.child("notes").getValue().toString();
+                    notes.setText(Notes);
+                    openClose = snapshot.child("open Close").getValue().toString();
+                    if(openClose.equals("open")){
+                        yes.setChecked(true);
                     }
+                    else if (openClose.equals("close")){
+                        no.setChecked(true);
+                    }
+                    business_name = snapshot.child("name").getValue().toString();
+                    BusinessName.setText(business_name);
 
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    System.out.println("The read failed"+ error.getCode());
                 }
-            });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getApplicationContext(), "The read failed", Toast.LENGTH_SHORT).show();
+                System.out.println("The read failed"+ error.getCode());
+            }
+        });
 
-        // issue causing code stop
 
          //setting onclick listeners
         BusinessName.setOnClickListener(new View.OnClickListener() {
@@ -167,8 +167,51 @@ public class counterPage extends AppCompatActivity {
                 occupancyLevels.setText(Integer.toString(counter));
             }
         });
-
-        // submit button
+        logoutbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                firebaseAuth.signOut();
+                //finish();
+                startActivity(new Intent(counterPage.this,MainActivity.class));
+            }
+        });
+        /** substitute submit button  **/
+//        // submit button
+//        submit.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                business_name = BusinessName.getText().toString();
+//                email = userEmail.getText().toString();
+//                Notes = notes.getText().toString();
+//                occupancy_Level = Integer.toString(counter);
+//                if(yes.isChecked() && no.isChecked() == false){
+//                    yes.setChecked(true);
+//                    openClose="open";
+//                }
+//                else if(no.isChecked() && yes.isChecked()==false){
+//                    no.setChecked(true);
+//                    openClose="close";
+//                }
+//                databaseRef = FirebaseDatabase.getInstance().getReference().child("Login").child(firebaseAuth.getCurrentUser().getUid());
+//                databaseRef.addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        snapshot.getRef().child("name").setValue(business_name);
+//                        snapshot.getRef().child("email").setValue(email);
+//                        snapshot.getRef().child("notes").setValue(Notes);
+//                        snapshot.getRef().child("open Close").setValue(openClose);
+//                        snapshot.getRef().child("occupancy level").setValue(occupancy_Level);
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError error) {
+//                        Toast.makeText(counterPage.this," data Changed but issue while writing", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//
+//            }
+//        });
+        /** possible issue here  **/
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -180,11 +223,11 @@ public class counterPage extends AppCompatActivity {
                         email = userEmail.getText().toString();
                         Notes = notes.getText().toString();
                         occupancy_Level = Integer.toString(counter);
-                        if(yes.isChecked() && no.isChecked() == false){
+                        if(yes.isChecked()){
                             yes.setChecked(true);
                             openClose="open";
                         }
-                        else if(no.isChecked() && yes.isChecked()==false){
+                        else{
                             no.setChecked(true);
                             openClose="close";
                         }
@@ -213,28 +256,27 @@ public class counterPage extends AppCompatActivity {
 
 
 
-
     }
 
-    private void Logout(){
-        firebaseAuth.signOut();
-        //finish();
-        startActivity(new Intent(counterPage.this,MainActivity.class));
-    }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu,menu);
-        return true;
-    }
+//    private void Logout(){
+//        firebaseAuth.signOut();
+//        //finish();
+//        startActivity(new Intent(counterPage.this,MainActivity.class));
+//    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.menu,menu);
+//        return true;
+//    }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.logoutMenu:{
-                Logout();
-                break;
-            }
-        }
-        return super.onOptionsItemSelected(item);
-    }
+//    @Override
+//    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+//        switch (item.getItemId()){
+//            case R.id.logoutMenu:{
+//                Logout();
+//                break;
+//            }
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
 }

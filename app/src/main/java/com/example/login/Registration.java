@@ -44,7 +44,9 @@ public class Registration extends AppCompatActivity {
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Toast.makeText(Registration.this, "coming inside submit", Toast.LENGTH_SHORT).show();
                 if(checkValidity()){
+
                     // uploading to the database
                     String usrEmail = userEmail.getText().toString().trim();
                     String usrPasswd = userPasswd.getText().toString().trim();
@@ -75,11 +77,12 @@ public class Registration extends AppCompatActivity {
     }
     private Boolean checkValidity(){
         Boolean result = false;
-
+        Toast.makeText(this, "coming inside checkValidity", Toast.LENGTH_SHORT).show();
         String name = userName.getText().toString();
         String password = userPasswd.getText().toString();
         String checkPassword = passwdCheck.getText().toString();
         String email  = userEmail.getText().toString();
+        Toast.makeText(this, checkPassword + password, Toast.LENGTH_SHORT).show();
         if(name.isEmpty() || password.isEmpty() || email.isEmpty()){
             Toast.makeText(this, "Please enter all the details", Toast.LENGTH_SHORT).show();
         }
@@ -87,7 +90,7 @@ public class Registration extends AppCompatActivity {
             Toast.makeText(this, "Re-entered Password Doesn't match", Toast.LENGTH_SHORT).show();
         }
         else{
-            result = true;
+           result = true;
         }
         return result;
 
@@ -99,7 +102,6 @@ public class Registration extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     if(task.isSuccessful()){
-                        firebaseAuth.signOut();
                         Toast.makeText(Registration.this,"Successfully registered, Verification email sent. Verify your account please!",Toast.LENGTH_SHORT).show();
                         firebaseAuth.signOut();
                         finish();
