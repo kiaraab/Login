@@ -15,6 +15,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -58,7 +59,10 @@ public class Registration extends AppCompatActivity {
                                 sendVerification();
                             }
                             else{
+                                FirebaseAuthException e = (FirebaseAuthException )task.getException();
+                                Toast.makeText(Registration.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                                 Toast.makeText(Registration.this, "Sign up failed", Toast.LENGTH_SHORT).show();
+
                             }
                         }
                     });
@@ -86,7 +90,7 @@ public class Registration extends AppCompatActivity {
         if(name.isEmpty() || password.isEmpty() || email.isEmpty()){
             Toast.makeText(this, "Please enter all the details", Toast.LENGTH_SHORT).show();
         }
-        else if(!(checkPassword.equals(checkPassword)))  {
+        else if(!(checkPassword.equals(password)) ) {
             Toast.makeText(this, "Re-entered Password Doesn't match", Toast.LENGTH_SHORT).show();
         }
         else{
